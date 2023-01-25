@@ -5,43 +5,113 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Models\Event;
+use App\Models\User;
 
 class EventController extends Controller
 {
-    public function index(){
+    public function index()
+    {
 
-        $events = Event::all();
+        $search = request('search');
 
-        return view('events.index', ['events' => $events]);
+        if ($search) {
+            $events = Event::where([
+                ['title', 'like', '%' . $search . '%']
+            ])->get();
+        } else
+            $events = Event::all();
+
+
+        return view('events.index', ['events' => $events, 'search' => $search]);
     }
 
-    public function create(){
+    public function update(Request $request)
+    {
+        $data = $request->all();
+
+
+
+        //image upload
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $requestImage = $request->image;
+
+            $extension = $requestImage->extension();
+
+            $imageName = md5($requestImage->getClientOriginalName() . strtotime("now")) . "." . $extension;
+
+            $request->image->move(public_path('img/events'), $imageName);
+
+            $data['image'] = $imageName;
+        }
+
+        Event::findorfail($request->id)->update($data);
+
+        redirect('/dashboard')->with('msg', 'Evento Atualizado com sucesso');
+    }
+
+    public function show($id = null)
+    {
+        $event = Event::findorfail($id);
+        $user = User::where('id', $event->user_id)->first()->toarray();
+        return view('events.show', ['event' => $event, 'user' => $user]);
+    }
+
+    public function create()
+    {
         return view('events.create');
     }
 
-    public function update(){
-        
+    public function edit($id)
+    {
+        $event = Event::Findorfail($id);
+
+        return view('events.edit', ['event' => $event]);
     }
-    
-    public function delete($id=null){
-        return view('events.delete', ['id' => $id]);
+
+    public function destroy($id)
+    {
+        Event::findorfail($id)->delete();
+
+        return redirect('/dashboard')->with('msg', 'Evento excluido com sucesso');
     }
-    
-    public function show($id=null){
-        
-        $event = Event::findorfail($id);
-        return view('events.update', ['event' => $event]);
-        
-    }
-    public function store(Request $request){
+
+    public function store(Request $request)
+    {
         $event = new Event();
 
         $event->title = $request->title;
+        $event->date = $request->date;
         $event->city = $request->city;
         $event->private = $request->private;
         $event->description = $request->description;
-        
+        $event->items = $request->items;
+
+        //image upload
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $requestImage = $request->image;
+
+            $extension = $requestImage->extension();
+
+            $imageName = md5($requestImage->getClientOriginalName() . strtotime("now")) . "." . $extension;
+
+            $request->image->move(public_path('img/events'), $imageName);
+
+            $event->image = $imageName;
+        }
+
+        $user = auth()->user();
+        $event->user_id = $user->id;
+
         $event->save();
         return redirect('/')->with('msg', 'Evento criado com sucesso!');
+    }
+
+    public function dashboard()
+    {
+        $user = auth()->user();
+
+        $events = $user->events;
+
+        return view('events.dashboard', ['events' => $events]);
     }
 }

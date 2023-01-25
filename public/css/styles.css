@@ -92,11 +92,11 @@
   }
   
   #events-container .card {
-    flex: 1 1 0;
+    flex: 1 1 24%;
     max-width: 25%;
     border-radius: 10px;
     padding: 0;
-    margin: 5px;
+    margin: .5%;
   }
   
   #events-container img {
@@ -136,3 +136,22 @@
   footer p {
     margin-bottom: 0;
   }
+
+  /* Dashboard */
+.dashboard-title-container {
+  margin-bottom: 30px;
+  margin-top: 30px;
+}
+
+.dashboard-events-container th {
+  width: 25%;
+}
+
+.dashboard-events-container form{
+  display: inline-block;
+}
+
+.img-preview{
+  width: 100px;
+  margin-top: 20px;
+}
